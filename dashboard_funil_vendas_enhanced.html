@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Funil de Vendas - Enhanced</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .dashboard-container {
+            max-width: 1920px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        /* Header com filtros de ano */
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .year-tabs {
+            display: flex;
+            gap: 5px;
+        }
+
+        .year-tab {
+            padding: 8px 20px;
+            background: #555;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .year-tab.active {
+            background: #333;
+        }
+
+        .month-tabs {
+            display: flex;
+            gap: 8px;
+        }
+
+        .month-tab {
+            width: 35px;
+            height: 35px;
+            background: #d4c5a0;
+            color: #333;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            border-radius: 3px;
+        }
+
+        .month-tab.active {
+            background: #333;
+            color: white;
+        }
+
+        .filters-section {
+            padding: 15px 30px;
+            background: #fafafa;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .filter-item select {
+            padding: 8px 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .clear-filters {
+            padding: 8px 20px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-left: auto;
+        }
+
+        /* KPI Cards Section */
+        .kpi-section {
+            padding: 25px 30px;
+            background: #f8f9fa;
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .kpi-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+            border-left: 4px solid #3498db;
+        }
+
+        .kpi-card.success {
+            border-left-color: #27ae60;
+        }
+
+        .kpi-card.warning {
+            border-left-color: #f39c12;
+        }
+
+        .kpi-card.danger {
+            border-left-color: #e74c3c;
+        }
+
+        .kpi-card.info {
+            border-left-color: #9b59b6;
+        }
+
+        .kpi-label {
+            font-size: 12px;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .kpi-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .kpi-change {
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .kpi-change.positive {
+            color: #27ae60;
+        }
+
+        .kpi-change.negative {
+            color: #e74c3c;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 25px 30px;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        /* Funil Table */
+        .table-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+
+        .section-title {
+            padding: 15px 20px;
+            background: #34495e;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .funil-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .funil-table th {
+            background: #ecf0f1;
+            padding: 12px 10px;
+            text-align: center;
+            font-size: 11px;
+            font-weight: 600;
+            color: #2c3e50;
+            border-bottom: 2px solid #bdc3c7;
+        }
+
+        .funil-table td {
+            padding: 10px;
+            text-align: center;
+            font-size: 13px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        .funil-table td:first-child {
+            text-align: left;
+            padding-left: 20px;
+            font-weight: 500;
+        }
+
+        .funil-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .funil-table .total-row {
+            background: #e8f4f8;
+            font-weight: 700;
+            border-top: 2px solid #3498db;
+        }
+
+        /* Heatmap colors */
+        .cell-high {
+            background: #ffcccc;
+        }
+
+        .cell-medium {
+            background: #ffffcc;
+        }
+
+        .cell-low {
+            background: #ccffcc;
+        }
+
+        .cell-zero {
+            background: #f8f9fa;
+            color: #bdc3c7;
+        }
+
+        /* Conversion Funnel Chart */
+        .funnel-chart {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+            padding: 20px;
+        }
+
+        .funnel-stage {
+            margin-bottom: 15px;
+        }
+
+        .funnel-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .funnel-bar {
+            height: 40px;
+            background: linear-gradient(90deg, #3498db 0%, #2980b9 100%);
+            border-radius: 4px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .funnel-bar.stage-2 {
+            background: linear-gradient(90deg, #2ecc71 0%, #27ae60 100%);
+        }
+
+        .funnel-bar.stage-3 {
+            background: linear-gradient(90deg, #f39c12 0%, #e67e22 100%);
+        }
+
+        .funnel-bar.stage-4 {
+            background: linear-gradient(90deg, #9b59b6 0%, #8e44ad 100%);
+        }
+
+        .funnel-bar.stage-5 {
+            background: linear-gradient(90deg, #27ae60 0%, #229954 100%);
+        }
+
+        /* Bottom Charts Grid */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+            padding: 20px;
+            min-height: 300px;
+        }
+
+        .chart-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+
+        /* Bar Chart Styles */
+        .bar-chart {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .bar-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .bar-label {
+            width: 150px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .bar-visual {
+            flex: 1;
+            height: 30px;
+            background: #3498db;
+            border-radius: 4px;
+            position: relative;
+        }
+
+        .bar-value {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: white;
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        /* Line Chart Mockup */
+        .line-chart-svg {
+            width: 100%;
+            height: 200px;
+            margin-top: 20px;
+        }
+
+        /* Gauge Chart */
+        .gauge-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 250px;
+        }
+
+        .gauge {
+            position: relative;
+            width: 200px;
+            height: 120px;
+        }
+
+        .gauge-bg {
+            width: 200px;
+            height: 100px;
+            border-radius: 100px 100px 0 0;
+            background: #ecf0f1;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .gauge-fill {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 65%;
+            background: linear-gradient(90deg, #e74c3c 0%, #f39c12 40%, #27ae60 100%);
+            border-radius: 100px 100px 0 0;
+            transform-origin: center bottom;
+        }
+
+        .gauge-value {
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 32px;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        .gauge-label {
+            position: absolute;
+            bottom: -55px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: #7f8c8d;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header com Anos e Meses -->
+        <div class="header">
+            <div class="year-tabs">
+                <button class="year-tab">2019</button>
+                <button class="year-tab">2020</button>
+                <button class="year-tab">2021</button>
+                <button class="year-tab">2022</button>
+                <button class="year-tab">2023</button>
+                <button class="year-tab">2024</button>
+                <button class="year-tab active">2025</button>
+            </div>
+            <div class="month-tabs">
+                <button class="month-tab">1</button>
+                <button class="month-tab">2</button>
+                <button class="month-tab">3</button>
+                <button class="month-tab">4</button>
+                <button class="month-tab">5</button>
+                <button class="month-tab">6</button>
+                <button class="month-tab">7</button>
+                <button class="month-tab">8</button>
+                <button class="month-tab">9</button>
+                <button class="month-tab">10</button>
+                <button class="month-tab active">11</button>
+                <button class="month-tab">12</button>
+            </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="filters-section">
+            <div class="filter-item">
+                <select>
+                    <option>Canal: Todos</option>
+                    <option>Google</option>
+                    <option>Facebook</option>
+                    <option>Instagram</option>
+                </select>
+            </div>
+            <div class="filter-item">
+                <select>
+                    <option>Todos</option>
+                    <option>Ativos</option>
+                    <option>Inativos</option>
+                </select>
+            </div>
+            <button class="clear-filters">LIMPAR FILTROS</button>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="kpi-section">
+            <div class="kpi-grid">
+                <div class="kpi-card success">
+                    <div class="kpi-label">Taxa de Conversão</div>
+                    <div class="kpi-value">49.2%</div>
+                    <div class="kpi-change positive">↑ 5.3% vs mês anterior</div>
+                </div>
+
+                <div class="kpi-card info">
+                    <div class="kpi-label">Total Prospects</div>
+                    <div class="kpi-value">65</div>
+                    <div class="kpi-change positive">↑ 12 novos</div>
+                </div>
+
+                <div class="kpi-card success">
+                    <div class="kpi-label">Vendas Realizadas</div>
+                    <div class="kpi-value">32</div>
+                    <div class="kpi-change positive">↑ 8.5%</div>
+                </div>
+
+                <div class="kpi-card warning">
+                    <div class="kpi-label">Em Negociação</div>
+                    <div class="kpi-value">19</div>
+                    <div class="kpi-change">29.2% do pipeline</div>
+                </div>
+
+                <div class="kpi-card danger">
+                    <div class="kpi-label">Taxa de Perda</div>
+                    <div class="kpi-value">7.7%</div>
+                    <div class="kpi-change negative">↓ 2.1% vs anterior</div>
+                </div>
+
+                <div class="kpi-card info">
+                    <div class="kpi-label">Melhor Canal</div>
+                    <div class="kpi-value">Google</div>
+                    <div class="kpi-change">60% conversão</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="content-grid">
+                <!-- Tabela do Funil -->
+                <div class="table-container">
+                    <div class="section-title">Status do Funil</div>
+                    <table class="funil-table">
+                        <thead>
+                            <tr>
+                                <th>Canal de Vendas</th>
+                                <th>Total de<br>Prospects</th>
+                                <th>Vendidos Mês<br>Atual</th>
+                                <th>Vendidos Fora<br>Mês Atual</th>
+                                <th>Negociando</th>
+                                <th>Abortamos</th>
+                                <th>Perdemos</th>
+                                <th>Demais<br>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Google</td>
+                                <td>10</td>
+                                <td class="cell-low">10</td>
+                                <td class="cell-zero">-</td>
+                                <td class="cell-zero">-</td>
+                                <td class="cell-zero">-</td>
+                                <td class="cell-zero">-</td>
+                                <td class="cell-zero">-</td>
+                            </tr>
+                            <tr>
+                                <td>Indique um Amigo</td>
+                                <td>15</td>
+                                <td class="cell-low">11</td>
+                                <td class="cell-medium">3</td>
+                                <td class="cell-zero">-</td>
+                                <td class="cell-medium">3</td>
+                                <td class="cell-high">1</td>
+                                <td class="cell-zero">-</td>
+                            </tr>
+                            <tr>
+                                <td>Anúncios Câmeras Vigilância Colaborativas</td>
+                                <td>7</td>
+                                <td class="cell-medium">6</td>
+                                <td class="cell-zero">-</td>
+                                <td class="cell-zero">-</td>
+                                <td class="cell-zero">-</td>
+                                <td class="cell-high">1</td>
+                                <td class="cell-zero">-</td>
+                            </tr>
+                            <tr>
+                                <td>Ativo Fibra</td>
+                                <td>6</td>
+                                <td class="cell-zero">-</td>
+                                <td class="cell-zero">-</td>
+                                <td class="cell-zero">-</td>
+                                <td class="cell-medium">6</td>
+                                <td class="cell-zero">-</td>
+                                <td class="cell-zero">-</td>
+                            </tr>
+                            <tr>
+                                <td>Site</td>
+                                <td>5</td>
+                                <td class="cell-zero">-</td>
+                                <td class="cell-medium">1</td>
+                                <td class="cell-medium">1</td>
+                                <td class="cell-zero">-</td>
+                                <td class="cell-medium">3</td>
+                                <td class="cell-medium">4</td>
+                            </tr>
+                            <tr>
+                                <td>Indicações BNI</td>
+                                <td>5</td>
+                                <td class="cell-medium">1</td>
+                                <td class="cell-medium">1</td>
+                                <td class="cell-zero">-</td>
+                                <td class="cell-zero">-</td>
+                                <td class="cell-medium">3</td>
+                                <td class="cell-zero">-</td>
+                            </tr>
+                            <tr>
+                                <td>Receptivo Telefone</td>
+                                <td>2</td>
+                                <td class="cell-medium">2</td>
+                                <td class="cell-zero">-</td>
+                                <td class="cell-zero">-</td>
+                                <td class="cell-zero">-</td>
+                                <td class="cell-zero">-</td>
+                                <td class="cell-zero">-</td>
+                            </tr>
+                            <tr>
+                                <td>Ativo BNI</td>
+                                <td>1</td>
+                                <td class="cell-medium">1</td>
+                                <td class="cell-zero">-</td>
+                                <td class="cell-zero">-</td>
+                                <td class="cell-zero">-</td>
+                                <td class="cell-zero">-</td>
+                                <td class="cell-zero">-</td>
+                            </tr>
+                            <tr>
+                                <td>Facebook</td>
+                                <td>1</td>
+                                <td class="cell-zero">-</td>
+                                <td class="cell-medium">1</td>
+                                <td class="cell-zero">-</td>
+                                <td class="cell-medium">1</td>
+                                <td class="cell-zero">-</td>
+                                <td class="cell-zero">-</td>
+                            </tr>
+                            <tr>
+                                <td>PARCEIRO - Mergulho Fitness</td>
+                                <td>1</td>
+                                <td class="cell-zero">-</td>
+                                <td class="cell-zero">-</td>
+                                <td class="cell-zero">-</td>
+                                <td class="cell-medium">1</td>
+                                <td class="cell-zero">-</td>
+                                <td class="cell-zero">-</td>
+                            </tr>
+                            <tr>
+                                <td>IndieFuido</td>
+                                <td>1</td>
+                                <td class="cell-zero">-</td>
+                                <td class="cell-zero">-</td>
+                                <td class="cell-zero">-</td>
+                                <td class="cell-zero">-</td>
+                                <td class="cell-medium">1</td>
+                                <td class="cell-zero">-</td>
+                            </tr>
+                            <tr>
+                                <td>Instagram</td>
+                                <td>1</td>
+                                <td class="cell-zero">-</td>
+                                <td class="cell-medium">1</td>
+                                <td class="cell-zero">-</td>
+                                <td class="cell-zero">-</td>
+                                <td class="cell-zero">-</td>
+                                <td class="cell-zero">-</td>
+                            </tr>
+                            <tr class="total-row">
+                                <td>Total</td>
+                                <td>65</td>
+                                <td>32</td>
+                                <td>7</td>
+                                <td>4</td>
+                                <td>19</td>
+                                <td>5</td>
+                                <td>4</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Funil de Conversão -->
+                <div class="funnel-chart">
+                    <div class="chart-title">Funil de Conversão</div>
+                    <div class="funnel-stage">
+                        <div class="funnel-label">
+                            <span>Total Prospects</span>
+                            <span>65 (100%)</span>
+                        </div>
+                        <div class="funnel-bar" style="width: 100%;">
+                            65
+                        </div>
+                    </div>
+                    <div class="funnel-stage">
+                        <div class="funnel-label">
+                            <span>Vendidos Total</span>
+                            <span>39 (60%)</span>
+                        </div>
+                        <div class="funnel-bar stage-2" style="width: 60%;">
+                            39
+                        </div>
+                    </div>
+                    <div class="funnel-stage">
+                        <div class="funnel-label">
+                            <span>Vendidos Mês Atual</span>
+                            <span>32 (49.2%)</span>
+                        </div>
+                        <div class="funnel-bar stage-5" style="width: 49.2%;">
+                            32
+                        </div>
+                    </div>
+                    <div class="funnel-stage">
+                        <div class="funnel-label">
+                            <span>Em Negociação</span>
+                            <span>19 (29.2%)</span>
+                        </div>
+                        <div class="funnel-bar stage-3" style="width: 29.2%;">
+                            19
+                        </div>
+                    </div>
+                    <div class="funnel-stage">
+                        <div class="funnel-label">
+                            <span>Perdidos</span>
+                            <span>5 (7.7%)</span>
+                        </div>
+                        <div class="funnel-bar stage-4" style="width: 7.7%;">
+                            5
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Grid -->
+            <div class="charts-grid">
+                <!-- Performance por Canal -->
+                <div class="chart-container">
+                    <div class="chart-title">Performance por Canal (Taxa de Conversão)</div>
+                    <div class="bar-chart">
+                        <div class="bar-item">
+                            <div class="bar-label">Google</div>
+                            <div class="bar-visual" style="width: 100%; background: #27ae60;">
+                                <div class="bar-value">100%</div>
+                            </div>
+                        </div>
+                        <div class="bar-item">
+                            <div class="bar-label">Indique um Amigo</div>
+                            <div class="bar-visual" style="width: 73.3%; background: #2ecc71;">
+                                <div class="bar-value">73.3%</div>
+                            </div>
+                        </div>
+                        <div class="bar-item">
+                            <div class="bar-label">Câmeras Vigilância</div>
+                            <div class="bar-visual" style="width: 85.7%; background: #27ae60;">
+                                <div class="bar-value">85.7%</div>
+                            </div>
+                        </div>
+                        <div class="bar-item">
+                            <div class="bar-label">Receptivo Telefone</div>
+                            <div class="bar-visual" style="width: 100%; background: #27ae60;">
+                                <div class="bar-value">100%</div>
+                            </div>
+                        </div>
+                        <div class="bar-item">
+                            <div class="bar-label">Indicações BNI</div>
+                            <div class="bar-visual" style="width: 40%; background: #f39c12;">
+                                <div class="bar-value">40%</div>
+                            </div>
+                        </div>
+                        <div class="bar-item">
+                            <div class="bar-label">Site</div>
+                            <div class="bar-visual" style="width: 20%; background: #e74c3c;">
+                                <div class="bar-value">20%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Evolução Mensal -->
+                <div class="chart-container">
+                    <div class="chart-title">Evolução de Vendas (Últimos 6 Meses)</div>
+                    <svg class="line-chart-svg" viewBox="0 0 500 200">
+                        <!-- Grid Lines -->
+                        <line x1="50" y1="180" x2="480" y2="180" stroke="#ecf0f1" stroke-width="2"/>
+                        <line x1="50" y1="140" x2="480" y2="140" stroke="#ecf0f1" stroke-width="1"/>
+                        <line x1="50" y1="100" x2="480" y2="100" stroke="#ecf0f1" stroke-width="1"/>
+                        <line x1="50" y1="60" x2="480" y2="60" stroke="#ecf0f1" stroke-width="1"/>
+                        <line x1="50" y1="20" x2="480" y2="20" stroke="#ecf0f1" stroke-width="1"/>
+                        
+                        <!-- Line Chart -->
+                        <polyline points="50,120 120,100 190,110 260,90 330,80 400,60 470,50" 
+                                  fill="none" stroke="#3498db" stroke-width="3"/>
+                        
+                        <!-- Data Points -->
+                        <circle cx="50" cy="120" r="5" fill="#3498db"/>
+                        <circle cx="120" cy="100" r="5" fill="#3498db"/>
+                        <circle cx="190" cy="110" r="5" fill="#3498db"/>
+                        <circle cx="260" cy="90" r="5" fill="#3498db"/>
+                        <circle cx="330" cy="80" r="5" fill="#3498db"/>
+                        <circle cx="400" cy="60" r="5" fill="#3498db"/>
+                        <circle cx="470" cy="50" r="5" fill="#27ae60"/>
+                        
+                        <!-- Labels -->
+                        <text x="50" y="195" text-anchor="middle" font-size="11" fill="#7f8c8d">Jun</text>
+                        <text x="120" y="195" text-anchor="middle" font-size="11" fill="#7f8c8d">Jul</text>
+                        <text x="190" y="195" text-anchor="middle" font-size="11" fill="#7f8c8d">Ago</text>
+                        <text x="260" y="195" text-anchor="middle" font-size="11" fill="#7f8c8d">Set</text>
+                        <text x="330" y="195" text-anchor="middle" font-size="11" fill="#7f8c8d">Out</text>
+                        <text x="400" y="195" text-anchor="middle" font-size="11" fill="#7f8c8d">Nov</text>
+                        <text x="470" y="195" text-anchor="middle" font-size="11" fill="#27ae60" font-weight="600">Dez</text>
+                        
+                        <!-- Values -->
+                        <text x="50" y="110" text-anchor="middle" font-size="10" fill="#2c3e50" font-weight="600">18</text>
+                        <text x="120" y="90" text-anchor="middle" font-size="10" fill="#2c3e50" font-weight="600">22</text>
+                        <text x="190" y="100" text-anchor="middle" font-size="10" fill="#2c3e50" font-weight="600">20</text>
+                        <text x="260" y="80" text-anchor="middle" font-size="10" fill="#2c3e50" font-weight="600">26</text>
+                        <text x="330" y="70" text-anchor="middle" font-size="10" fill="#2c3e50" font-weight="600">28</text>
+                        <text x="400" y="50" text-anchor="middle" font-size="10" fill="#2c3e50" font-weight="600">30</text>
+                        <text x="470" y="40" text-anchor="middle" font-size="10" fill="#27ae60" font-weight="700">32</text>
+                    </svg>
+                </div>
+
+                <!-- Taxa de Fechamento (Gauge) -->
+                <div class="chart-container">
+                    <div class="chart-title">Taxa de Fechamento (Negociando → Vendidos)</div>
+                    <div class="gauge-container">
+                        <div class="gauge">
+                            <div class="gauge-bg">
+                                <div class="gauge-fill"></div>
+                            </div>
+                            <div class="gauge-value">168%</div>
+                            <div class="gauge-label">TAXA DE FECHAMENTO</div>
+                        </div>
+                    </div>
+                    <div style="text-align: center; margin-top: 20px; font-size: 12px; color: #7f8c8d;">
+                        32 vendas realizadas de 19 em negociação<br>
+                        <span style="color: #27ae60; font-weight: 600;">↑ Meta superada em 68%</span>
+                    </div>
+                </div>
+
+                <!-- Distribuição do Pipeline -->
+                <div class="chart-container">
+                    <div class="chart-title">Distribuição do Pipeline Atual</div>
+                    <div style="display: flex; justify-content: center; align-items: center; height: 200px; gap: 20px;">
+                        <div style="text-align: center;">
+                            <div style="width: 150px; height: 150px; border-radius: 50%; background: conic-gradient(
+                                #27ae60 0% 49.2%,
+                                #3498db 49.2% 60%,
+                                #f39c12 60% 89.2%,
+                                #e74c3c 89.2% 96.9%,
+                                #95a5a6 96.9% 100%
+                            ); margin: 0 auto;"></div>
+                        </div>
+                        <div style="font-size: 12px;">
+                            <div style="margin-bottom: 10px;">
+                                <span style="display: inline-block; width: 12px; height: 12px; background: #27ae60; margin-right: 5px;"></span>
+                                <strong>Vendidos Mês:</strong> 32 (49.2%)
+                            </div>
+                            <div style="margin-bottom: 10px;">
+                                <span style="display: inline-block; width: 12px; height: 12px; background: #3498db; margin-right: 5px;"></span>
+                                <strong>Vendidos Fora:</strong> 7 (10.8%)
+                            </div>
+                            <div style="margin-bottom: 10px;">
+                                <span style="display: inline-block; width: 12px; height: 12px; background: #f39c12; margin-right: 5px;"></span>
+                                <strong>Abortamos:</strong> 19 (29.2%)
+                            </div>
+                            <div style="margin-bottom: 10px;">
+                                <span style="display: inline-block; width: 12px; height: 12px; background: #e74c3c; margin-right: 5px;"></span>
+                                <strong>Perdemos:</strong> 5 (7.7%)
+                            </div>
+                            <div>
+                                <span style="display: inline-block; width: 12px; height: 12px; background: #95a5a6; margin-right: 5px;"></span>
+                                <strong>Demais:</strong> 4 (6.2%)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
